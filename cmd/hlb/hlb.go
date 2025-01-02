@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"sync"
 	"syscall"
@@ -57,7 +59,7 @@ func loopFilesWorker(wg *sync.WaitGroup, jobs chan string, inodes cmap.Concurren
 					log.Warn("failed to get syscall.Stat_t")
 					continue
 				}
-				inodes.Upsert(strconv.FormatUint(stat.Ino, 10), []string{path}, updateInodes)
+				inodes.Upsert(strconv.FormatUint(stat.Ino, 10), []string{filepath.Join(path, file.Name())}, updateInodes)
 			}
 		}
 		wg.Done()
@@ -93,7 +95,16 @@ func main() {
 	//Start the recursion
 	LoopDirsFiles(&wg, jobs, "/media/bigdata")
 	wg.Wait()
+	out := make([][]string, 0, inodes.Count())
 	inodes.IterCb(func(k string, v []string) {
-		fmt.Printf("%s: %d\n", k, len(v))
+		sort.Slice(v, func(i, j int) bool {
+			return v[i] < v[j]
+		})
+		out = append(out, v)
 	})
+	jout, err := json.MarshalIndent(out, "", "  ")
+	if err != nil {
+		log.WithError(err).Fatal("failed to convert output to json")
+	}
+	fmt.Println(string(jout))
 }
