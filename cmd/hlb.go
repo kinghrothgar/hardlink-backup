@@ -94,6 +94,6 @@ func main() {
 	LoopDirsFiles(&wg, jobs, "/media/bigdata")
 	wg.Wait()
 	inodes.IterCb(func(k string, v []string) {
-		fmt.Printf("%s: %d", k, len(v))
+		fmt.Printf("%s: %d\n", k, len(v))
 	})
 }
