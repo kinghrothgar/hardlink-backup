@@ -95,12 +95,20 @@ func main() {
 	//Start the recursion
 	LoopDirsFiles(&wg, jobs, "/media/bigdata")
 	wg.Wait()
-	out := make([][]string, 0, inodes.Count())
+	// TODO: more optimized size?
+	out := make([][]string, 0)
 	inodes.IterCb(func(k string, v []string) {
+		if len(v) == 1 {
+			return
+		}
 		sort.Slice(v, func(i, j int) bool {
 			return v[i] < v[j]
 		})
 		out = append(out, v)
+	})
+	// TODO: issue if out is len 0?
+	sort.Slice(out, func(i, j int) bool {
+		return out[i][0] < out[j][0]
 	})
 	jout, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
