@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -85,6 +86,14 @@ func LoopDirsFiles(wg *sync.WaitGroup, jobs chan string, path string) error {
 }
 
 func main() {
+	flag.Parse()
+	if flag.NArg() != 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+	path := flag.Arg(0)
+	// TODO: do path validation such as existing and not containing more than one filesystem
+
 	jobs := make(chan string, 100)
 	inodes := cmap.New[[]string]()
 	var wg sync.WaitGroup
@@ -93,7 +102,7 @@ func main() {
 		go loopFilesWorker(&wg, jobs, inodes)
 	}
 	//Start the recursion
-	LoopDirsFiles(&wg, jobs, "/media/bigdata")
+	LoopDirsFiles(&wg, jobs, path)
 	wg.Wait()
 	// TODO: more optimized size?
 	out := make([][]string, 0)
